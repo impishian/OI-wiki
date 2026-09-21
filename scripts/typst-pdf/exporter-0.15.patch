@@ -1,5 +1,5 @@
 diff --git i/oi-wiki-export-typst/index.js w/oi-wiki-export-typst/index.js
-index 0c6e1f6..d1dedfd 100644
+index 0c6e1f6..2efb46f 100644
 --- i/oi-wiki-export-typst/index.js
 +++ w/oi-wiki-export-typst/index.js
 @@ -1,6 +1,6 @@
@@ -19,14 +19,18 @@ index 0c6e1f6..d1dedfd 100644
 
  async function exists(file) {
    try {
-@@ -88,6 +90,7 @@ async function main() {
+@@ -88,9 +90,10 @@ async function main() {
    }
 
    await fs.writeFile('includes.typ', includes)
 +  await fs.writeFile('converted-pages.json', JSON.stringify(convertedPages, null, 2) + '\n')
    console.log(INFO + 'Export successful.')
 
-   async function convertMarkdown(filename, depth, title) {
+-  async function convertMarkdown(filename, depth, title) {
++  async function convertMarkdown(filename, depth, title, sourcePath) {
+     if (!filename.endsWith('.md')) {
+       console.error(ERROR + 'File \'' + filename + '\' is not a markdown file')
+       process.exit(1)
 @@ -101,7 +104,7 @@ async function main() {
        process.exit(1)
      }
@@ -54,13 +58,22 @@ index 0c6e1f6..d1dedfd 100644
 +    file.stem = filename.replace(PREFIX_REGEX, '')
 +    file.extname = '.typ'
 +    writeSync(file)
-+    const page = relative(join(oiwikiRoot, 'docs'), filename).split(sep).join('/')
++    const page = sourcePath.split(sep).join('/')
 +    if (convertedPageSet.has(page)) throw new Error('duplicate converted page: ' + page)
 +    convertedPages.push(page)
 +    convertedPageSet.add(page)
    }
 
    // 递归处理各个 chapter
+@@ -138,7 +141,7 @@ async function main() {
+       console.log(INFO + 'Exporting: ' + key)
+
+       if (typeof object[key] === 'string') { // 对应页面
+-        await convertMarkdown(join(oiwikiRoot, 'docs', object[key]), depth + 1, object[key])
++        await convertMarkdown(join(oiwikiRoot, 'docs', object[key]), depth + 1, key, object[key])
+
+         const moduleName = escape(getModuleName(object[key]))
+         result += '{0} {1} <{2}>\n'.format(
 diff --git i/remark-typst/lib/compiler.js w/remark-typst/lib/compiler.js
 index dfa274b..6165415 100644
 --- i/remark-typst/lib/compiler.js

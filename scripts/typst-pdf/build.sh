@@ -16,14 +16,15 @@ python3 scripts/typst-pdf/check_nav.py \
 
 EXPORTER_URL=https://github.com/OI-wiki/OI-Wiki-export.git
 EXPORTER_SHA=a0743c869b166ccb4d3a42368f904a85384730a2
-if [ ! -d tmp/OI-Wiki-export/.git ]; then
-  git clone "$EXPORTER_URL" tmp/OI-Wiki-export
+EXPORTER_DIR=tmp/pdfs/OI-Wiki-export
+if [ ! -d "$EXPORTER_DIR/.git" ]; then
+  git clone "$EXPORTER_URL" "$EXPORTER_DIR"
 fi
-git -C tmp/OI-Wiki-export fetch --depth 1 origin "$EXPORTER_SHA"
-git -C tmp/OI-Wiki-export checkout --detach "$EXPORTER_SHA"
-git -C tmp/OI-Wiki-export reset --hard "$EXPORTER_SHA"
-git -C tmp/OI-Wiki-export clean -ffd
-git -C tmp/OI-Wiki-export apply --check "$ROOT/scripts/typst-pdf/exporter-0.15.patch"
-git -C tmp/OI-Wiki-export apply "$ROOT/scripts/typst-pdf/exporter-0.15.patch"
+git -C "$EXPORTER_DIR" fetch --depth 1 origin "$EXPORTER_SHA"
+git -C "$EXPORTER_DIR" checkout --detach "$EXPORTER_SHA"
+git -C "$EXPORTER_DIR" reset --hard "$EXPORTER_SHA"
+git -C "$EXPORTER_DIR" clean -ffd
+git -C "$EXPORTER_DIR" apply --check "$ROOT/scripts/typst-pdf/exporter-0.15.patch"
+git -C "$EXPORTER_DIR" apply "$ROOT/scripts/typst-pdf/exporter-0.15.patch"
 
 mkdir -p output/pdf
