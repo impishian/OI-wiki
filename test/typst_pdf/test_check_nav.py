@@ -73,3 +73,25 @@ def test_build_manifest_rejects_missing_included_page(tmp_path):
 
     with pytest.raises(FileNotFoundError, match="missing.md"):
         build_manifest(config, tmp_path, extra_paths=["missing.md"])
+
+
+def test_build_manifest_requires_nav_list(tmp_path):
+    config = tmp_path / "mkdocs.yml"
+    config.write_text("nav:\n  入门: intro.md\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="top-level nav must be a list"):
+        build_manifest(config, tmp_path)
+
+
+def test_build_manifest_rejects_non_markdown_pages(tmp_path):
+    config = tmp_path / "mkdocs.yml"
+    config.write_text("nav:\n  - 首页: index.html\n", encoding="utf-8")
+    (tmp_path / "index.html").write_text("<h1>首页</h1>\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="navigation page must be Markdown: index.html"):
+        build_manifest(config, tmp_path)
+
+    config.write_text("nav:\n  - 首页: index.md\n", encoding="utf-8")
+    (tmp_path / "index.md").write_text("# 首页\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="navigation page must be Markdown: index.html"):
+        build_manifest(config, tmp_path, extra_paths=["index.html"])

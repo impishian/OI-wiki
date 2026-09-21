@@ -42,6 +42,8 @@ def _walk(
     if isinstance(node, str):
         page = Path(node)
         page_key = page.as_posix()
+        if page.suffix.lower() != ".md":
+            raise ValueError(f"navigation page must be Markdown: {page_key}")
         if page_key in seen:
             raise ValueError(f"duplicate navigation page: {page_key}")
         path = docs_dir / page
@@ -63,6 +65,8 @@ def build_manifest(
         config = yaml.load(stream, Loader=yaml.BaseLoader)
     if not isinstance(config, dict) or "nav" not in config:
         raise ValueError("configuration must contain a nav mapping")
+    if not isinstance(config["nav"], list):
+        raise ValueError("top-level nav must be a list")
     seen: set[str] = set()
     manifest = _walk(config["nav"], docs_dir, seen)
     for page in extra_paths or ():
