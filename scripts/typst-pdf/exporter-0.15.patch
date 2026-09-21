@@ -8,16 +8,16 @@ index 0c6e1f6..c03339f 100644
  const labelHistory = new Array()
 +const convertedPages = new Array()
 +const convertedPageSet = new Set()
- 
+
  async function exists(file) {
    try {
 @@ -88,9 +90,10 @@ async function main() {
    }
- 
+
    await fs.writeFile('includes.typ', includes)
 +  await fs.writeFile('converted-pages.json', JSON.stringify(convertedPages, null, 2) + '\n')
    console.log(INFO + 'Export successful.')
- 
+
 -  async function convertMarkdown(filename, depth, title) {
 +  async function convertMarkdown(filename, depth, title, sourcePath) {
      if (!filename.endsWith('.md')) {
@@ -26,7 +26,7 @@ index 0c6e1f6..c03339f 100644
 @@ -101,7 +104,7 @@ async function main() {
        process.exit(1)
      }
- 
+
 -    unified()
 +    const file = await unified()
        .use(remarkParse)
@@ -55,15 +55,15 @@ index 0c6e1f6..c03339f 100644
 +    convertedPages.push(page)
 +    convertedPageSet.add(page)
    }
- 
+
    // 递归处理各个 chapter
 @@ -138,7 +141,7 @@ async function main() {
        console.log(INFO + 'Exporting: ' + key)
- 
+
        if (typeof object[key] === 'string') { // 对应页面
 -        await convertMarkdown(join(oiwikiRoot, 'docs', object[key]), depth + 1, object[key])
 +        await convertMarkdown(join(oiwikiRoot, 'docs', object[key]), depth + 1, key, object[key])
- 
+
          const moduleName = escape(getModuleName(object[key]))
          result += '{0} {1} <{2}>\n'.format(
 @@ -155,7 +158,7 @@ async function main() {
@@ -87,7 +87,7 @@ index dfa274b..47c268e 100644
 +#import "../oi-wiki.typ": mi, mitex
 +#import "../theme.typ": *
  `
- 
+
  export default toTypst
 @@ -48,21 +49,11 @@ function toTypst(tree, options) {
    const mapFootnoteDefinitions = new Map()
@@ -99,7 +99,7 @@ index dfa274b..47c268e 100644
    // That its last item is (not) `true` suggests
    // that indentation should (not) be performed.
    const indentPar = new Array(true)
- 
+
 -  // Index of current outer link
 -  let linkIndex = 0
 -  // Used to indicate whether the section named "References"
@@ -132,7 +132,7 @@ index dfa274b..47c268e 100644
 -    article += ')\n'
 -  }
    return article
- 
+
    // Functions
 @@ -115,19 +90,8 @@ function toTypst(tree, options) {
          return location !== '' ? '@{0}[{1}]'.format(location, children) : ''
@@ -154,7 +154,7 @@ index dfa274b..47c268e 100644
 +        return '#link("{0}")[{1}]'.format(location, children)
        }
      }
- 
+
 @@ -184,8 +148,9 @@ function toTypst(tree, options) {
            node.alt || '',
          )
@@ -166,7 +166,7 @@ index dfa274b..47c268e 100644
 +        )
        }
      }
- 
+
 @@ -301,17 +266,11 @@ function toTypst(tree, options) {
          return ''
        }
@@ -191,7 +191,7 @@ index dfa274b..47c268e 100644
        case 'footnote': {
 -        hasFootnotes = true
          indentPar.push(false)
- 
+
          const ret = '#footnote[{0}]'.format(all(node, parse).join(''))
 @@ -351,7 +309,6 @@ function toTypst(tree, options) {
          return ret
@@ -199,5 +199,5 @@ index dfa274b..47c268e 100644
        case 'footnoteReference': {
 -        hasFootnotes = true
          indentPar.push(false)
- 
+
          const ret = '#footnote[{0}]'.format(
