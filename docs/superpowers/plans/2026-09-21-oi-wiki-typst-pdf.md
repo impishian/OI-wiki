@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build all 466 documents in `mkdocs.yml` into one polished, verified PDF at `output/pdf/OI-Wiki-Typst-0.15.0.pdf` with Typst 0.15.0.
+**Goal:** Build all 466 original Markdown documents (464 `mkdocs.yml` pages plus two explicit appendices) into one polished, verified PDF at `output/pdf/OI-Wiki-Typst-0.15.0.pdf` with Typst 0.15.0.
 
 **Architecture:** Pin OI Wiki's official Typst exporter at its tested 0.15.0 upgrade commit, apply a small local compatibility/behavior patch, and replace only the top-level book template with a repository-owned print template. A shell entry point owns dependency/font setup and the full build; small Python programs independently validate navigation coverage and the finished PDF so conversion failures cannot silently produce an incomplete book.
 
@@ -13,7 +13,7 @@
 ## File map
 
 - `scripts/typst-pdf/build.sh`: reproducible end-to-end build entry point; pins exporter commit, prepares fonts, converts Markdown, compiles Typst, and invokes verification.
-- `scripts/typst-pdf/check_nav.py`: extracts the ordered Markdown list from `mkdocs.yml`, rejects missing/duplicate pages, and writes the build manifest.
+- `scripts/typst-pdf/check_nav.py`: extracts the ordered Markdown list from `mkdocs.yml`, appends explicitly requested auxiliary pages, rejects missing/duplicate pages, and writes the build manifest.
 - `scripts/typst-pdf/verify_pdf.py`: validates the final PDF's structure, metadata, page text, title coverage, links, and fonts.
 - `scripts/typst-pdf/exporter-0.15.patch`: repository-owned patch over upstream commit `a0743c869b166ccb4d3a42368f904a85384730a2`; removes QR appendices, makes missing images fatal, and emits a conversion manifest.
 - `scripts/typst-pdf/book.typ`: repository-owned A4 book shell with cover, metadata page, contents, section styling, page headers/footers, and final colophon.
@@ -194,10 +194,10 @@ Run:
 
 ```bash
 rtk tmp/pdfs/venv/bin/python -m pytest test/typst_pdf/test_check_nav.py -q
-rtk tmp/pdfs/venv/bin/python scripts/typst-pdf/check_nav.py --config mkdocs.yml --docs docs --output tmp/pdfs/nav-manifest.json --expect-count 466
+rtk tmp/pdfs/venv/bin/python scripts/typst-pdf/check_nav.py --config mkdocs.yml --docs docs --include edit-landing.md --include intro/docker-deploy.md --output tmp/pdfs/nav-manifest.json --expect-count 466
 ```
 
-Expected: `3 passed` and `validated 466 navigation pages`.
+Expected: `3 passed` and `validated 466 navigation pages` with the two explicit includes.
 
 - [ ] **Step 7: Commit the manifest validator and dependency pins**
 
@@ -238,6 +238,8 @@ mkdir -p "$work_root" "$repo_root/output/pdf"
 python3 "$repo_root/scripts/typst-pdf/check_nav.py" \
   --config "$repo_root/mkdocs.yml" \
   --docs "$repo_root/docs" \
+  --include edit-landing.md \
+  --include intro/docker-deploy.md \
   --output "$work_root/nav-manifest.json" \
   --expect-count 466
 
