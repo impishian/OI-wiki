@@ -1,0 +1,177 @@
+diff --git i/oi-wiki-export-typst/index.js w/oi-wiki-export-typst/index.js
+index 0c6e1f6..339b9cb 100644
+--- i/oi-wiki-export-typst/index.js
++++ w/oi-wiki-export-typst/index.js
+@@ -1,6 +1,6 @@
+ 'use strict'
+ 
+-import { join } from 'path'
++import { join, relative, sep } from 'path'
+ import { promises as fs } from 'fs'
+ 
+ import { unified } from 'unified'
+@@ -26,6 +26,7 @@ const ERROR = "\x1b[1;31m[ERROR]\x1b[0m "
+ // Used to avoid multiple label definition, which typst will
+ // consider to be an error.
+ const labelHistory = new Array()
++const convertedPages = new Array()
+ 
+ async function exists(file) {
+   try {
+@@ -88,6 +89,7 @@ async function main() {
+   }
+ 
+   await fs.writeFile('includes.typ', includes)
++  await fs.writeFile('converted-pages.json', JSON.stringify(convertedPages, null, 2) + '\n')
+   console.log(INFO + 'Export successful.')
+ 
+   async function convertMarkdown(filename, depth, title) {
+@@ -101,7 +103,7 @@ async function main() {
+       process.exit(1)
+     }
+ 
+-    unified()
++    const file = await unified()
+       .use(remarkParse)
+       .use(remarkMath)
+       .use(remarkGfm)
+@@ -118,15 +120,14 @@ async function main() {
+         path: filename.replace(/\.md$/, '/'), // 由文件名转换而来的路径
+         title: title,
+       })
+-      .process(await read(filename), (err, file) => {
+-        if (err) {
+-          throw err
+-        }
+-        file.dirname = 'typ'
+-        file.stem = filename.replace(PREFIX_REGEX, '')
+-        file.extname = '.typ'
+-        writeSync(file)
+-      })
++      .process(await read(filename))
++    file.dirname = 'typ'
++    file.stem = filename.replace(PREFIX_REGEX, '')
++    file.extname = '.typ'
++    writeSync(file)
++    const page = relative(join(oiwikiRoot, 'docs'), filename).split(sep).join('/')
++    if (convertedPages.includes(page)) throw new Error('duplicate converted page: ' + page)
++    convertedPages.push(page)
+   }
+ 
+   // 递归处理各个 chapter
+diff --git i/remark-typst/lib/compiler.js w/remark-typst/lib/compiler.js
+index dfa274b..6165415 100644
+--- i/remark-typst/lib/compiler.js
++++ w/remark-typst/lib/compiler.js
+@@ -48,21 +48,11 @@ function toTypst(tree, options) {
+   const mapFootnoteDefinitions = new Map()
+   // Key: string - Value: node
+   const mapDefinitions = new Map()
+-  // Item: { location: string, plainText: string }
+-  const arrayLinks = new Array()
+   // This array is served as a stack.
+   // That its last item is (not) `true` suggests
+   // that indentation should (not) be performed.
+   const indentPar = new Array(true)
+ 
+-  // Index of current outer link
+-  let linkIndex = 0
+-  // Used to indicate whether the section named "References"
+-  // is already present in original markdown document
+-  let hasFootnotes = false
+-  // Whether to parse images to plain texts (title, alt, or simply url)
+-  // for use in references
+-  let parsingPlain = false
+   // Whether we are parsing table headers right now
+   let inTableHeader = false
+   // Whether the current details block should be unwrapped
+@@ -77,22 +67,6 @@ function toTypst(tree, options) {
+   parseDefinition(tree)
+   // 解析文章
+   let article = ARTICLE_HEADER + parse(tree)
+-  // 创建文章尾注，对外链添加二维码
+-  if (linkIndex > 0) {
+-    if (hasFootnotes === false) {
+-      article += '#heading(level: {0}, numbering: none, outlined: false)[外部参考资料]\n'.format(
+-        options.depth + 1)
+-    }
+-
+-    article += '#links-grid('
+-    for (const [i, link] of arrayLinks.entries()) {
+-      article += 'links-cell[#text(fill: cmyk(0%, 100%, 100%, 0%))[\\[{0}\\]] #link("{1}")[{2}]], qrcode("{1}"), \n'.format(
+-        i + 1,
+-        link.location.replace(/\\/g, '\\\\'),
+-        link.plainText)
+-    }
+-    article += ')\n'
+-  }
+   return article
+ 
+   // Functions
+@@ -115,19 +89,8 @@ function toTypst(tree, options) {
+         return location !== '' ? '@{0}[{1}]'.format(location, children) : ''
+       } else {
+         const location = url.replace(/\\/g, '\\\\')
+-        ++linkIndex
+-
+         const children = all(node, parse).join('')
+-        parsingPlain = true
+-        const plainText = all(node, parse).join('')
+-        parsingPlain = false
+-        arrayLinks.push({ location: location, plainText: plainText })
+-
+-        return '#link("{0}")[{1}]#super(text(fill: cmyk(0%, 100%, 100%, 0%))[{2}\\[{3}\\]])'.format(
+-          location,
+-          children,
+-          ZWSP,
+-          linkIndex)
++        return '#link("{0}")[{1}]'.format(location, children)
+       }
+     }
+ 
+@@ -184,8 +147,9 @@ function toTypst(tree, options) {
+           node.alt || '',
+         )
+       } catch (e) {
+-        console.error(ERROR + 'Error occurred when processing image file "{0}"'.format(uri))
+-        return ''
++        throw new Error(
++          'Error occurred when processing image file "{0}": {1}'.format(uri, e.message),
++        )
+       }
+     }
+ 
+@@ -301,17 +265,11 @@ function toTypst(tree, options) {
+         return ''
+       }
+       case 'image': {
+-        if (parsingPlain) {
+-          return node.title || node.alt || node.url
+-        }
+         return makeImage(node.url.toLowerCase())
+       }
+       case 'imageReference': {
+         const defn = mapDefinitions.get(node.identifier)
+         if (defn) {
+-          if (parsingPlain) {
+-            return defn.title || defn.alt || defn.url
+-          }
+           return makeImage(defn.url)
+         }
+         return ''
+@@ -342,7 +300,6 @@ function toTypst(tree, options) {
+         return '[{0}]'.format(all(node, parse).join(''))
+       }
+       case 'footnote': {
+-        hasFootnotes = true
+         indentPar.push(false)
+ 
+         const ret = '#footnote[{0}]'.format(all(node, parse).join(''))
+@@ -351,7 +308,6 @@ function toTypst(tree, options) {
+         return ret
+       }
+       case 'footnoteReference': {
+-        hasFootnotes = true
+         indentPar.push(false)
+ 
+         const ret = '#footnote[{0}]'.format(

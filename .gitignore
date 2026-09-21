@@ -9,3 +9,5 @@ site/
 node_modules/
 .worktrees/
 *.pyc
+/tmp/pdfs/
+/output/pdf/*.pdf
