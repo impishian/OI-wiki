@@ -8,16 +8,16 @@ index 0c6e1f6..c03339f 100644
  const labelHistory = new Array()
 +const convertedPages = new Array()
 +const convertedPageSet = new Set()
-
+ 
  async function exists(file) {
    try {
 @@ -88,9 +90,10 @@ async function main() {
    }
-
+ 
    await fs.writeFile('includes.typ', includes)
 +  await fs.writeFile('converted-pages.json', JSON.stringify(convertedPages, null, 2) + '\n')
    console.log(INFO + 'Export successful.')
-
+ 
 -  async function convertMarkdown(filename, depth, title) {
 +  async function convertMarkdown(filename, depth, title, sourcePath) {
      if (!filename.endsWith('.md')) {
@@ -26,7 +26,7 @@ index 0c6e1f6..c03339f 100644
 @@ -101,7 +104,7 @@ async function main() {
        process.exit(1)
      }
-
+ 
 -    unified()
 +    const file = await unified()
        .use(remarkParse)
@@ -55,15 +55,15 @@ index 0c6e1f6..c03339f 100644
 +    convertedPages.push(page)
 +    convertedPageSet.add(page)
    }
-
+ 
    // 递归处理各个 chapter
 @@ -138,7 +141,7 @@ async function main() {
        console.log(INFO + 'Exporting: ' + key)
-
+ 
        if (typeof object[key] === 'string') { // 对应页面
 -        await convertMarkdown(join(oiwikiRoot, 'docs', object[key]), depth + 1, object[key])
 +        await convertMarkdown(join(oiwikiRoot, 'docs', object[key]), depth + 1, key, object[key])
-
+ 
          const moduleName = escape(getModuleName(object[key]))
          result += '{0} {1} <{2}>\n'.format(
 @@ -155,7 +158,7 @@ async function main() {
@@ -75,10 +75,284 @@ index 0c6e1f6..c03339f 100644
  #pagebreak(to: "odd", weak: true)
  #set page(header: none)
  `
+diff --git i/oi-wiki-export-typst/oi-wiki-export.typ w/oi-wiki-export-typst/oi-wiki-export.typ
+index f8f078e..c65dfed 100644
+--- i/oi-wiki-export-typst/oi-wiki-export.typ
++++ w/oi-wiki-export-typst/oi-wiki-export.typ
+@@ -1,220 +1,53 @@
+-/* Base template of oi-wiki-export-typst */
++#import "oi-wiki.typ" as upstream
++#import "theme.typ": *
+ 
+-/* BEGIN imports */
+-#import "constants.typ": *
+-#import "oi-wiki.typ": page-header
+-/* END imports */
+-#show ref: it => {
+-  if query(it.target).len() == 0 {
+-    return text(fill: red, "<未找到引用" + str(it.target) + ">")
+-  }
+-  it
+-}
++// Math helpers are supplied by the pinned official exporter module. Importing
++// it as a namespace keeps its legacy layout helpers from shadowing our theme.
++#let mi = upstream.mi
++#let mitex = upstream.mitex
+ 
+-/* BEGIN meta */
+-#set text(
+-  lang: "zh",
+-  region: "cn",
+-)
+-/* END meta */
++#show: book-theme
+ 
+-/* BEGIN front cover */
+-#set page(
+-  header: none,
+-  paper: "a4",
+-  header-ascent: .3in,
+-  fill: luma(95%),
+-)
++#let source-revision = sys.inputs.at("source-revision", default: "unknown")
++#let build-date = sys.inputs.at("build-date", default: "unknown")
++#let typst-version = sys.inputs.at("typst-version", default: "0.15.0")
+ 
++#set page(header: none, footer: none, fill: panel)
+ #align(center + horizon)[
+-  // OI-Wiki logo
+-  #image(
+-    bytes("<svg viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M12 3 1 9l11 6 9-4.91V17h2V9M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82Z\"></path></svg>"),
+-    height: 4cm,
+-  )
+-  #text(
+-    25pt,
+-    font: serif-font,
+-    weight: 700,
+-  )[OI Wiki (Beta)]
+-  #v(4cm)
+-  #text(
+-    18pt,
+-    font: serif-font,
+-  )[
+-    OI Wiki 项目组
+-
+-    #(
+-      datetime
+-        .today()
+-        .display("[year] 年 [month padding:none] 月 [day padding:none] 日")
+-    )
+-  ]
++  #text(13pt, fill: cyan, tracking: 1.4pt)[COMPETITIVE PROGRAMMING HANDBOOK]
++  #v(14mm)
++  #text(36pt, font: heading-font, fill: navy, weight: 700)[OI Wiki]
++  #v(4mm)
++  #text(15pt, fill: muted)[信息学竞赛知识整合站点 · 完整典藏版]
++  #v(38mm)
++  #line(length: 45mm, stroke: 1.5pt + cyan)
++  #v(8mm)
++  #text(11pt, fill: muted)[OI Wiki Team · #build-date]
+ ]
+ 
+-#pagebreak(to: "odd", weak: true)
+-/* END front cover */
+-
+-/* BEGIN article formatting */
+-
+-#set page(
+-  fill: none,
+-  // header: text(9pt)[
+-  //   #counter(page).display("i")
+-  //   #h(1fr)
+-  // ]
+-)
+-#counter(page).update(1)
+-
+-#set text(
+-  ROOT_EM,
+-  font: serif-font,
++#pagebreak(to: "even")
++#set page(fill: paper)
++= 版本与许可
++#table(
++  columns: (34mm, 1fr),
++  stroke: none,
++  inset: (x: 0pt, y: 3pt),
++  [源版本], [#source-revision],
++  [排版系统], [Typst #typst-version],
++  [生成日期], [#build-date],
++  [项目网站], [#link("https://oi-wiki.org")],
+ )
+ 
+-#set par(
+-  leading: .8em,
+-  // HACK: CJK-style first line indent is still in progress
+-  // we are currently using JS build tools to solve this
+-  // issues: https://github.com/typst/typst/issues/311
+-  //         https://github.com/typst/typst/issues/1410
+-  // first-line-indent: 2em,
+-  linebreaks: "optimized",
+-  justify: true,
+-)
+-#show raw.where(block: true): set par(justify: false)
+-
+-#set block(spacing: .8em)
+-
+-#set strong(delta: 0)
+-#show strong: set text(
+-  font: sans-font,
+-  // New Computer Modern: 400      |----->700
+-  // Noto Sans CJK:       400 500<-|      700
+-  // DejaVu Sans Mono:    400      |----->700
+-  // font-that-has-600:   400 500  |->600 700
+-  //                              551
+-  weight: 551,
+-)
+-
+-#set heading(numbering: "1.1")
+-#show heading: set text(
+-  font: sans-font,
+-  weight: 551,
+-)
+-#show heading.where(level: 1): set text(18pt)
+-#show heading.where(level: 2): it => {
+-  set text(16pt)
+-  v(1em, weak: true)
+-  align(center, it)
+-  v(1em, weak: true)
+-}
+-#show heading.where(level: 3): it => {
+-  set text(14pt)
+-  v(1em, weak: true)
+-  it
+-  v(1em, weak: true)
+-}
+-#show heading.where(level: 4): set text(12pt)
+-#show heading.where(level: 5): set text(11pt)
+-#show heading.where(level: 6): set text(10pt)
+-
+-#show emph: set text(font: emph-font)
+-
+-#show math.equation: set text(font: math-font)
+-
+-#show raw: set text(
+-  RAW_EM,
+-  font: raw-font,
+-)
+-
+-#show raw.where(block: false): it => highlight(
+-  fill: luma(95%),
+-  it,
+-)
+-/* END article formatting */
+-
+-/* BEGIN outline */
+-#show outline.entry.where(level: 1): it => {
+-  v(2em, weak: true)
+-  text(12pt, font: sans-font, it)
+-}
+-
+-#outline(indent: 2em)
+-/* END outline */
+-
+-/* BEGIN main */
+-#set page(header: page-header)
+-
+-#counter(page).update(1)
+-
+-#show heading.where(level: 1): it => {
+-  set text(
+-    25pt,
+-    font: serif-font,
+-    weight: 700,
+-  )
+-  set par(first-line-indent: 0em)
+-
+-  align(horizon)[
+-    第#counter(heading).display("一")章
+-
+-    #it.body
+-  ]
+-}
+-
+-#show heading.where(level: 2): it => {
+-  counter(footnote).update(0)
+-  it
+-}
+-
+-// Metrics in New Computer Modern
+-// Width of digits:     500 units
+-//       of period:     278 units
+-//       of bullet:     778 units
+-//       of whitespace: 333 units
+-#set list(
+-  indent: 2em,
+-)
+-#show list: set block(width: 100%)
+-#set enum(
+-  indent: 2em,
+-)
+-#show enum: set block(width: 100%)
+-
+-#show ref: it => {
+-  let el = it.element
+-  if el != none and el.func() == heading and it.form == "normal" and it.supplement != auto {
+-    link(
+-      el.location(), 
+-      it.supplement + text(size: 0.9em, "→" + numbering(
+-        el.numbering,
+-        ..counter(heading).at(el.location())
+-      ) + "@p" + str(el.location().page()))
+-    )
+-  } else {
+-    it
+-  }
+-}
+-#show ref: set text(fill: cmyk(0%, 100%, 100%, 0%))
+-
+-#show footnote.entry: it => {
+-  set text(9pt)
+-  it
+-}
+-
+-#include "includes.typ"
+-/* END main */
+-
+-/* BEGIN back cover */
+ #pagebreak(to: "odd")
+-
++#outline(title: [目录], depth: 3, indent: 1.4em)
++#pagebreak(to: "odd")
+ #set page(
+-  header: none,
+-  fill: luma(95%),
++  header: page-header,
++  footer: context align(center, text(size: 8pt, fill: muted, counter(page).display("1"))),
+ )
++#counter(page).update(1)
++#include "includes.typ"
+ 
+-#align(
+-  center + horizon,
+-  text(17pt)[https://oi-wiki.org],
+-)
+-/* END back cover */
++#pagebreak(to: "odd")
++#set page(header: none, footer: none, fill: navy)
++#align(center + horizon, text(13pt, fill: white)[https://oi-wiki.org])
 diff --git i/remark-typst/lib/compiler.js w/remark-typst/lib/compiler.js
-index dfa274b..47c268e 100644
+index dfa274b..a326f23 100644
 --- i/remark-typst/lib/compiler.js
 +++ w/remark-typst/lib/compiler.js
+@@ -1,7 +1,7 @@
+ 'use strict'
+ 
+ import { extname, join, dirname, basename } from 'path'
+-import { execFileSync, spawnSync } from 'child_process'
++import { spawnSync } from 'child_process'
+ import { existsSync, writeFileSync, copyFileSync } from 'fs'
+ import { URL } from 'url'
+ 
 @@ -38,7 +38,8 @@ const DETAILS_TYPES = [
    'warning', 'failure', 'danger', 'bug', 'example', 'quote',
  ]
@@ -87,7 +361,7 @@ index dfa274b..47c268e 100644
 +#import "../oi-wiki.typ": mi, mitex
 +#import "../theme.typ": *
  `
-
+ 
  export default toTypst
 @@ -48,21 +49,11 @@ function toTypst(tree, options) {
    const mapFootnoteDefinitions = new Map()
@@ -99,7 +373,7 @@ index dfa274b..47c268e 100644
    // That its last item is (not) `true` suggests
    // that indentation should (not) be performed.
    const indentPar = new Array(true)
-
+ 
 -  // Index of current outer link
 -  let linkIndex = 0
 -  // Used to indicate whether the section named "References"
@@ -132,7 +406,7 @@ index dfa274b..47c268e 100644
 -    article += ')\n'
 -  }
    return article
-
+ 
    // Functions
 @@ -115,19 +90,8 @@ function toTypst(tree, options) {
          return location !== '' ? '@{0}[{1}]'.format(location, children) : ''
@@ -154,8 +428,46 @@ index dfa274b..47c268e 100644
 +        return '#link("{0}")[{1}]'.format(location, children)
        }
      }
-
-@@ -184,8 +148,9 @@ function toTypst(tree, options) {
+ 
+@@ -152,40 +116,21 @@ function toTypst(tree, options) {
+         } else {
+           ext = extname(loc)
+         }
+-        const is_svg = ext === '.svg'
+-        dest = join('images', toPrefix(join(dirname(uri), basename(uri, extname(uri)))) + (is_svg ? '.svg' : '.jpg'))
+-        // convert
+-        switch (ext) {
+-          case '.jpg':
+-          case '.svg': {
+-            if (!existsSync(dest)) {
+-              copyFileSync(uri, dest)
+-            }
+-            break
+-          }
+-          case '.jpeg': {
+-            if (!existsSync(dest)) {
+-              copyFileSync(uri, basename(dest, 'jpeg') + '.jpg')
+-            }
+-            break
+-          }
+-          default: {
+-            if (!existsSync(dest)) {
+-              // 混合白色背景（原图可能是 PNG 透明图）
+-              execFileSync(
+-                'convert',
+-                ['-background', 'white', '-flatten', ext === '.gif' ? uri + '[0]' : uri, dest])
+-            }
+-            break
+-          }
++        if (ext === '') {
++          throw new Error('image has no file extension')
++        }
++        dest = join('images', toPrefix(join(dirname(uri), basename(uri, extname(uri)))) + ext)
++        if (!existsSync(dest)) {
++          copyFileSync(uri, dest)
+         }
+         return '#img-auto("./images/{0}", alt: "{1}")\n'.format(
+           basename(dest),
            node.alt || '',
          )
        } catch (e) {
@@ -166,8 +478,8 @@ index dfa274b..47c268e 100644
 +        )
        }
      }
-
-@@ -301,17 +266,11 @@ function toTypst(tree, options) {
+ 
+@@ -301,17 +246,11 @@ function toTypst(tree, options) {
          return ''
        }
        case 'image': {
@@ -185,19 +497,19 @@ index dfa274b..47c268e 100644
            return makeImage(defn.url)
          }
          return ''
-@@ -342,7 +301,6 @@ function toTypst(tree, options) {
+@@ -342,7 +281,6 @@ function toTypst(tree, options) {
          return '[{0}]'.format(all(node, parse).join(''))
        }
        case 'footnote': {
 -        hasFootnotes = true
          indentPar.push(false)
-
+ 
          const ret = '#footnote[{0}]'.format(all(node, parse).join(''))
-@@ -351,7 +309,6 @@ function toTypst(tree, options) {
+@@ -351,7 +289,6 @@ function toTypst(tree, options) {
          return ret
        }
        case 'footnoteReference': {
 -        hasFootnotes = true
          indentPar.push(false)
-
+ 
          const ret = '#footnote[{0}]'.format(
