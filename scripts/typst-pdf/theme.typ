@@ -8,10 +8,10 @@
 #let paper = rgb("ffffff")
 #let panel = rgb("f3f7f8")
 #let rule = rgb("d3dde2")
-#let body-font = ("Songti SC", "Noto Serif CJK SC", "New Computer Modern")
-#let heading-font = ("LXGW WenKai GB Screen R", "LXGW WenKai", "PingFang SC", "Noto Sans CJK SC")
+#let body-font = ("LiSong Pro", "New Computer Modern")
+#let heading-font = ("LXGW WenKai GB Screen R", "PingFang SC")
 #let code-font = ("DejaVu Sans Mono", "Menlo")
-#let math-font = ("New Computer Modern Math", "Songti SC", "Noto Serif CJK SC")
+#let math-font = ("New Computer Modern Math", "LiSong Pro")
 
 #let _kind-label(kind) = {
   if kind == "tip" { "技巧" }

@@ -423,10 +423,10 @@ Create `scripts/typst-pdf/theme.typ` with exported `book-theme`, `admonition`, `
 #let paper = rgb("ffffff")
 #let panel = rgb("f3f7f8")
 #let rule = rgb("d3dde2")
-#let body-font = ("Noto Serif CJK SC", "Songti SC", "New Computer Modern")
-#let heading-font = ("LXGW WenKai", "Noto Sans CJK SC", "PingFang SC")
-#let code-font = ("DejaVu Sans Mono", "Noto Sans Mono CJK SC", "Menlo")
-#let math-font = ("New Computer Modern Math", "Noto Serif CJK SC")
+#let body-font = ("LiSong Pro", "New Computer Modern")
+#let heading-font = ("LXGW WenKai GB Screen R", "PingFang SC")
+#let code-font = ("DejaVu Sans Mono", "Menlo")
+#let math-font = ("New Computer Modern Math", "LiSong Pro")
 
 #let book-theme(body) = {
   set document(title: "OI Wiki", author: "OI Wiki Team")
@@ -566,7 +566,7 @@ Define a `font_paths` array containing existing directories only, from:
 $work_root/fonts
 ```
 
-Build repeated `--font-path` arguments from this array. Run `typst fonts` with those arguments and require the family names `Noto Serif CJK SC` or `Songti SC`, `LXGW WenKai` or `Noto Sans CJK SC`, and `DejaVu Sans Mono` or `Menlo`. Exit with a message listing the missing family category if any category has no match.
+Build repeated `--font-path` arguments from this array. Run `typst fonts` with those arguments and require at least one environment-available family in each category: body (`LiSong Pro` or `New Computer Modern`), heading (`LXGW WenKai GB Screen R` or `PingFang SC`), code (`DejaVu Sans Mono` or `Menlo`), and math (`New Computer Modern Math` or `LiSong Pro`). Exit with a message listing the missing family category if any category has no match.
 
 - [ ] **Step 3: Add conversion, manifest comparison, and compilation**
 
