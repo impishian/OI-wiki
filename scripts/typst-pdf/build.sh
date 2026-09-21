@@ -21,6 +21,8 @@ if [ ! -d tmp/OI-Wiki-export/.git ]; then
 fi
 git -C tmp/OI-Wiki-export fetch --depth 1 origin "$EXPORTER_SHA"
 git -C tmp/OI-Wiki-export checkout --detach "$EXPORTER_SHA"
+git -C tmp/OI-Wiki-export reset --hard "$EXPORTER_SHA"
+git -C tmp/OI-Wiki-export clean -ffd
 git -C tmp/OI-Wiki-export apply --check "$ROOT/scripts/typst-pdf/exporter-0.15.patch"
 git -C tmp/OI-Wiki-export apply "$ROOT/scripts/typst-pdf/exporter-0.15.patch"
 
