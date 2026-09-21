@@ -7,7 +7,7 @@ exporter_root="$work_root/OI-Wiki-export"
 export_dir="$exporter_root/oi-wiki-export-typst"
 source_root="$work_root/source"
 build_python=python3
-exporter_url="https://github.com/OI-wiki/OI-Wiki-export.git"
+exporter_url="${OI_WIKI_EXPORTER_URL:-https://github.com/OI-wiki/OI-Wiki-export.git}"
 exporter_commit="a0743c869b166ccb4d3a42368f904a85384730a2"
 expected_typst="typst 0.15.0 (3ae52774)"
 output="$repo_root/output/pdf/OI-Wiki-Typst-0.15.0.pdf"
@@ -44,7 +44,9 @@ mkdir -p "$work_root" "$repo_root/output/pdf"
 if [[ ! -d "$exporter_root/.git" ]]; then
   git clone "$exporter_url" "$exporter_root"
 fi
-git -C "$exporter_root" fetch --depth 1 origin "$exporter_commit"
+if ! git -C "$exporter_root" cat-file -e "$exporter_commit^{commit}" 2>/dev/null; then
+  git -C "$exporter_root" fetch --depth 1 origin "$exporter_commit"
+fi
 git -C "$exporter_root" checkout --detach "$exporter_commit"
 git -C "$exporter_root" reset --hard "$exporter_commit"
 git -C "$exporter_root" clean -ffd

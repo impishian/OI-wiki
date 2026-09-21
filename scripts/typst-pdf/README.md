@@ -22,4 +22,6 @@ rtk bash scripts/typst-pdf/build.sh
 
 首次运行需联网克隆导出器、安装 npm 依赖，转换远程图片时也可能需要网络。完整构建耗时较长。中间文件和日志位于 `tmp/pdfs/`；转换使用临时 `source/` 副本，不会改写 `docs/` 原文。
 
+如果网络不可用但本机已有固定提交的 exporter clone，可设置 `OI_WIKI_EXPORTER_URL` 为该本地 clone 的绝对路径；脚本会验证其固定提交后使用它。
+
 最终文件为 `output/pdf/OI-Wiki-Typst-0.15.0.pdf`。若预检报告缺少命令或字体，请安装对应工具，或把所需字体放入 `tmp/pdfs/fonts`；`typst fonts` 可列出 Typst 实际识别的字体族。
