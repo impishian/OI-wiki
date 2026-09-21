@@ -6,8 +6,7 @@ work_root="$repo_root/tmp/pdfs"
 exporter_root="$work_root/OI-Wiki-export"
 export_dir="$exporter_root/oi-wiki-export-typst"
 source_root="$work_root/source"
-venv_root="$work_root/venv"
-venv_python="$venv_root/bin/python"
+build_python=python3
 exporter_url="https://github.com/OI-wiki/OI-Wiki-export.git"
 exporter_commit="a0743c869b166ccb4d3a42368f904a85384730a2"
 expected_typst="typst 0.15.0 (3ae52774)"
@@ -32,13 +31,12 @@ if [[ "$actual_typst" != "$expected_typst" ]]; then
 fi
 
 mkdir -p "$work_root" "$repo_root/output/pdf"
-if [[ ! -x "$venv_python" ]]; then
-  python3 -m venv "$venv_root"
-fi
-"$venv_python" -m pip install --disable-pip-version-check \
-  -r "$repo_root/scripts/typst-pdf/requirements.txt"
+"$build_python" -c 'import yaml' || {
+  printf 'Python package PyYAML is required for navigation validation\n' >&2
+  exit 1
+}
 
-"$venv_python" "$repo_root/scripts/typst-pdf/check_nav.py" \
+"$build_python" "$repo_root/scripts/typst-pdf/check_nav.py" \
   --config "$repo_root/mkdocs.yml" --docs "$repo_root/docs" \
   --include edit-landing.md --include intro/docker-deploy.md \
   --output "$work_root/nav-manifest.json" --expect-count 466
@@ -61,7 +59,7 @@ cp "$repo_root/scripts/typst-pdf/book.typ" "$export_dir/oi-wiki-export.typ"
 
 # remark-snippet rewrites Markdown, so conversion uses a disposable source copy.
 # Its mkdocs.yml keeps the original hierarchy and appends the two explicit pages.
-"$venv_python" - "$repo_root" "$source_root" <<'PY'
+"$build_python" - "$repo_root" "$source_root" <<'PY'
 from pathlib import Path
 import shutil
 import sys
@@ -140,7 +138,7 @@ fi
   node index.js "$source_root" 2>&1 | tee "$work_root/export.log"
 )
 
-"$venv_python" - "$work_root/nav-manifest.json" \
+"$build_python" - "$work_root/nav-manifest.json" \
   "$export_dir/converted-pages.json" <<'PY'
 import json
 from pathlib import Path

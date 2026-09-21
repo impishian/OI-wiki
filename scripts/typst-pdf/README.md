@@ -5,7 +5,7 @@
 ## 依赖
 
 - Typst `0.15.0 (3ae52774)`；
-- Python 3（用于依赖安装、页面清单和结构一致性验证）；
+- Python 3 及 PyYAML（用于页面清单和结构一致性验证）；
 - Node.js、npm、Git。
 
 PDF 直接由 Typst 生成，不依赖 Homebrew、ImageMagick 或 Poppler，也不执行 PNG 渲染或 Poppler 检查。
@@ -20,6 +20,6 @@ PDF 直接由 Typst 生成，不依赖 Homebrew、ImageMagick 或 Poppler，也�
 rtk bash scripts/typst-pdf/build.sh
 ```
 
-首次运行需联网克隆导出器、安装 Python/npm 依赖，转换远程图片时也可能需要网络。完整构建耗时较长。中间文件、虚拟环境和日志位于 `tmp/pdfs/`；转换使用临时 `source/` 副本，不会改写 `docs/` 原文。
+首次运行需联网克隆导出器、安装 npm 依赖，转换远程图片时也可能需要网络。完整构建耗时较长。中间文件和日志位于 `tmp/pdfs/`；转换使用临时 `source/` 副本，不会改写 `docs/` 原文。
 
 最终文件为 `output/pdf/OI-Wiki-Typst-0.15.0.pdf`。若预检报告缺少命令或字体，请安装对应工具，或把所需字体放入 `tmp/pdfs/fonts`；`typst fonts` 可列出 Typst 实际识别的字体族。
