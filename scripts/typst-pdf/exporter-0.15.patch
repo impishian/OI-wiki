@@ -1,15 +1,7 @@
 diff --git i/oi-wiki-export-typst/index.js w/oi-wiki-export-typst/index.js
-index 0c6e1f6..2efb46f 100644
+index 0c6e1f6..8bee705 100644
 --- i/oi-wiki-export-typst/index.js
 +++ w/oi-wiki-export-typst/index.js
-@@ -1,6 +1,6 @@
- 'use strict'
-
--import { join } from 'path'
-+import { join, relative, sep } from 'path'
- import { promises as fs } from 'fs'
-
- import { unified } from 'unified'
 @@ -26,6 +26,8 @@ const ERROR = "\x1b[1;31m[ERROR]\x1b[0m "
  // Used to avoid multiple label definition, which typst will
  // consider to be an error.
@@ -58,7 +50,7 @@ index 0c6e1f6..2efb46f 100644
 +    file.stem = filename.replace(PREFIX_REGEX, '')
 +    file.extname = '.typ'
 +    writeSync(file)
-+    const page = sourcePath.split(sep).join('/')
++    const page = sourcePath
 +    if (convertedPageSet.has(page)) throw new Error('duplicate converted page: ' + page)
 +    convertedPages.push(page)
 +    convertedPageSet.add(page)
