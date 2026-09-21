@@ -1,41 +1,42 @@
 diff --git i/oi-wiki-export-typst/index.js w/oi-wiki-export-typst/index.js
-index 0c6e1f6..339b9cb 100644
+index 0c6e1f6..d1dedfd 100644
 --- i/oi-wiki-export-typst/index.js
 +++ w/oi-wiki-export-typst/index.js
 @@ -1,6 +1,6 @@
  'use strict'
- 
+
 -import { join } from 'path'
 +import { join, relative, sep } from 'path'
  import { promises as fs } from 'fs'
- 
+
  import { unified } from 'unified'
-@@ -26,6 +26,7 @@ const ERROR = "\x1b[1;31m[ERROR]\x1b[0m "
+@@ -26,6 +26,8 @@ const ERROR = "\x1b[1;31m[ERROR]\x1b[0m "
  // Used to avoid multiple label definition, which typst will
  // consider to be an error.
  const labelHistory = new Array()
 +const convertedPages = new Array()
- 
++const convertedPageSet = new Set()
+
  async function exists(file) {
    try {
-@@ -88,6 +89,7 @@ async function main() {
+@@ -88,6 +90,7 @@ async function main() {
    }
- 
+
    await fs.writeFile('includes.typ', includes)
 +  await fs.writeFile('converted-pages.json', JSON.stringify(convertedPages, null, 2) + '\n')
    console.log(INFO + 'Export successful.')
- 
+
    async function convertMarkdown(filename, depth, title) {
-@@ -101,7 +103,7 @@ async function main() {
+@@ -101,7 +104,7 @@ async function main() {
        process.exit(1)
      }
- 
+
 -    unified()
 +    const file = await unified()
        .use(remarkParse)
        .use(remarkMath)
        .use(remarkGfm)
-@@ -118,15 +120,14 @@ async function main() {
+@@ -118,15 +121,15 @@ async function main() {
          path: filename.replace(/\.md$/, '/'), // 由文件名转换而来的路径
          title: title,
        })
@@ -54,10 +55,11 @@ index 0c6e1f6..339b9cb 100644
 +    file.extname = '.typ'
 +    writeSync(file)
 +    const page = relative(join(oiwikiRoot, 'docs'), filename).split(sep).join('/')
-+    if (convertedPages.includes(page)) throw new Error('duplicate converted page: ' + page)
++    if (convertedPageSet.has(page)) throw new Error('duplicate converted page: ' + page)
 +    convertedPages.push(page)
++    convertedPageSet.add(page)
    }
- 
+
    // 递归处理各个 chapter
 diff --git i/remark-typst/lib/compiler.js w/remark-typst/lib/compiler.js
 index dfa274b..6165415 100644
@@ -73,7 +75,7 @@ index dfa274b..6165415 100644
    // That its last item is (not) `true` suggests
    // that indentation should (not) be performed.
    const indentPar = new Array(true)
- 
+
 -  // Index of current outer link
 -  let linkIndex = 0
 -  // Used to indicate whether the section named "References"
@@ -106,7 +108,7 @@ index dfa274b..6165415 100644
 -    article += ')\n'
 -  }
    return article
- 
+
    // Functions
 @@ -115,19 +89,8 @@ function toTypst(tree, options) {
          return location !== '' ? '@{0}[{1}]'.format(location, children) : ''
@@ -128,7 +130,7 @@ index dfa274b..6165415 100644
 +        return '#link("{0}")[{1}]'.format(location, children)
        }
      }
- 
+
 @@ -184,8 +147,9 @@ function toTypst(tree, options) {
            node.alt || '',
          )
@@ -140,7 +142,7 @@ index dfa274b..6165415 100644
 +        )
        }
      }
- 
+
 @@ -301,17 +265,11 @@ function toTypst(tree, options) {
          return ''
        }
@@ -165,7 +167,7 @@ index dfa274b..6165415 100644
        case 'footnote': {
 -        hasFootnotes = true
          indentPar.push(false)
- 
+
          const ret = '#footnote[{0}]'.format(all(node, parse).join(''))
 @@ -351,7 +308,6 @@ function toTypst(tree, options) {
          return ret
@@ -173,5 +175,5 @@ index dfa274b..6165415 100644
        case 'footnoteReference': {
 -        hasFootnotes = true
          indentPar.push(false)
- 
+
          const ret = '#footnote[{0}]'.format(
