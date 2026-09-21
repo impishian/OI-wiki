@@ -44,13 +44,21 @@ def _walk(
         page_key = page.as_posix()
         if page.suffix.lower() != ".md":
             raise ValueError(f"navigation page must be Markdown: {page_key}")
+        root = docs_dir.resolve()
+        candidate = (docs_dir / page).resolve()
+        try:
+            normalized = candidate.relative_to(root)
+        except ValueError as error:
+            raise ValueError(
+                f"navigation page outside docs root: {page_key}"
+            ) from error
+        page_key = normalized.as_posix()
         if page_key in seen:
             raise ValueError(f"duplicate navigation page: {page_key}")
-        path = docs_dir / page
-        if not path.is_file():
+        if not candidate.is_file():
             raise FileNotFoundError(f"navigation page does not exist: {page_key}")
         seen.add(page_key)
-        return [{"path": page_key, "title": title or _heading(path, page.stem)}]
+        return [{"path": page_key, "title": title or _heading(candidate, page.stem)}]
 
     raise TypeError(f"unsupported navigation node: {node!r}")
 

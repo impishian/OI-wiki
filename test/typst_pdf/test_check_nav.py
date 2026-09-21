@@ -95,3 +95,23 @@ def test_build_manifest_rejects_non_markdown_pages(tmp_path):
     (tmp_path / "index.md").write_text("# 首页\n", encoding="utf-8")
     with pytest.raises(ValueError, match="navigation page must be Markdown: index.html"):
         build_manifest(config, tmp_path, extra_paths=["index.html"])
+
+
+@pytest.mark.parametrize("page", ["../outside.md", "/outside.md"])
+def test_build_manifest_rejects_pages_outside_docs_root(tmp_path, page):
+    config = tmp_path / "mkdocs.yml"
+    config.write_text(f"nav:\n  - 越界: {page}\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="navigation page outside docs root"):
+        build_manifest(config, tmp_path)
+
+
+def test_build_manifest_normalizes_paths_before_duplicate_check(tmp_path):
+    config = tmp_path / "mkdocs.yml"
+    config.write_text(
+        "nav:\n  - 入门: intro.md\n  - 重复: sub/../intro.md\n", encoding="utf-8"
+    )
+    (tmp_path / "intro.md").write_text("# 入门\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="duplicate navigation page: intro.md"):
+        build_manifest(config, tmp_path)
