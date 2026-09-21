@@ -1,0 +1,23 @@
+# OI Wiki Typst PDF 构建
+
+本目录使用 Typst 0.15.0 将 464 篇导航页面和 2 篇明确附录排成一册 PDF。构建固定使用官方导出器提交 `a0743c869b166ccb4d3a42368f904a85384730a2`，并应用本地兼容补丁和书籍主题。
+
+## 依赖
+
+- Typst `0.15.0 (3ae52774)`、Python 3、Node.js、npm、Git；
+- ImageMagick 的 `convert`；
+- Poppler 的 `pdfinfo`、`pdftotext`、`pdftoppm`、`pdffonts`。
+
+字体每类至少需要一种：正文为 LiSong Pro 或 New Computer Modern，标题为 LXGW WenKai GB Screen R 或 PingFang SC，代码为 DejaVu Sans Mono 或 Menlo，数学为 New Computer Modern Math 或 LiSong Pro。脚本搜索系统字体目录及 `tmp/pdfs/fonts`。
+
+## 构建
+
+在仓库根目录运行：
+
+```bash
+rtk bash scripts/typst-pdf/build.sh
+```
+
+首次运行需联网克隆导出器、安装 Python/npm 依赖，转换远程图片时也可能需要网络。完整构建耗时较长。中间文件、虚拟环境和日志位于 `tmp/pdfs/`；转换使用临时 `source/` 副本，不会改写 `docs/` 原文。
+
+最终文件为 `output/pdf/OI-Wiki-Typst-0.15.0.pdf`。若预检报告缺少命令或字体，请安装对应工具，或把所需字体放入 `tmp/pdfs/fonts`；`typst fonts` 可列出 Typst 实际识别的字体族。
