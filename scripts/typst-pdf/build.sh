@@ -13,7 +13,7 @@ exporter_commit="a0743c869b166ccb4d3a42368f904a85384730a2"
 expected_typst="typst 0.15.0 (3ae52774)"
 output="$repo_root/output/pdf/OI-Wiki-Typst-0.15.0.pdf"
 
-required_tools=(git node npm typst convert pdfinfo pdftotext pdftoppm pdffonts python3)
+required_tools=(git node npm typst python3)
 missing_tools=()
 for tool in "${required_tools[@]}"; do
   command -v "$tool" >/dev/null 2>&1 || missing_tools+=("$tool")

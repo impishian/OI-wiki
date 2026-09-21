@@ -4,9 +4,11 @@
 
 ## 依赖
 
-- Typst `0.15.0 (3ae52774)`、Python 3、Node.js、npm、Git；
-- ImageMagick 的 `convert`；
-- Poppler 的 `pdfinfo`、`pdftotext`、`pdftoppm`、`pdffonts`。
+- Typst `0.15.0 (3ae52774)`；
+- Python 3（用于依赖安装、页面清单和结构一致性验证）；
+- Node.js、npm、Git。
+
+PDF 直接由 Typst 生成，不依赖 Homebrew、ImageMagick 或 Poppler，也不执行 PNG 渲染或 Poppler 检查。
 
 字体每类至少需要一种：正文为 LiSong Pro 或 New Computer Modern，标题为 LXGW WenKai GB Screen R 或 PingFang SC，代码为 DejaVu Sans Mono 或 Menlo，数学为 New Computer Modern Math 或 LiSong Pro。脚本搜索系统字体目录及 `tmp/pdfs/fonts`。
 
