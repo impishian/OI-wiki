@@ -407,7 +407,7 @@ int main() { return 0; }
 
 - [ ] **Step 2: Run the smoke compile and observe the missing import**
 
-Run: `rtk typst compile test/typst_pdf/fixtures/theme-smoke.typ tmp/pdfs/theme-smoke.pdf`
+Run: `rtk typst compile --root . test/typst_pdf/fixtures/theme-smoke.typ tmp/pdfs/theme-smoke.pdf`
 
 Expected: FAIL because `scripts/typst-pdf/theme.typ` does not exist.
 
@@ -506,7 +506,7 @@ Add show rules for level-1 section openers, level-2 article headings, orphan con
 Run:
 
 ```bash
-rtk typst compile test/typst_pdf/fixtures/theme-smoke.typ tmp/pdfs/theme-smoke.pdf
+rtk typst compile --root . test/typst_pdf/fixtures/theme-smoke.typ tmp/pdfs/theme-smoke.pdf
 rtk pdftoppm -png -f 1 -l 1 -r 144 tmp/pdfs/theme-smoke.pdf tmp/pdfs/theme-smoke
 ```
 

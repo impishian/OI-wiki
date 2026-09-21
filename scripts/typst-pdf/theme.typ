@@ -8,10 +8,10 @@
 #let paper = rgb("ffffff")
 #let panel = rgb("f3f7f8")
 #let rule = rgb("d3dde2")
-#let body-font = ("Songti SC", "New Computer Modern")
-#let heading-font = ("LXGW WenKai GB Screen R", "PingFang SC")
+#let body-font = ("Songti SC", "Noto Serif CJK SC", "New Computer Modern")
+#let heading-font = ("LXGW WenKai GB Screen R", "LXGW WenKai", "PingFang SC", "Noto Sans CJK SC")
 #let code-font = ("DejaVu Sans Mono", "Menlo")
-#let math-font = ("New Computer Modern Math", "Songti SC")
+#let math-font = ("New Computer Modern Math", "Songti SC", "Noto Serif CJK SC")
 
 #let _kind-label(kind) = {
   if kind == "tip" { "技巧" }
@@ -73,7 +73,7 @@
 #let sourcecode(body, highlight_color: cyan.lighten(75%)) = {
   show raw.where(block: true): it => {
     let language = if it.lang == none or it.lang == "" { "CODE" } else { it.lang }
-    set par(justify: false)
+    set par(justify: false, linebreaks: "optimized")
     block(
       width: 100%,
       breakable: true,
