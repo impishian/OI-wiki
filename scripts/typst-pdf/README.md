@@ -17,7 +17,7 @@ PDF 直接由 Typst 生成，不依赖 Homebrew、ImageMagick 或 Poppler，也�
 在仓库根目录运行：
 
 ```bash
-rtk bash scripts/typst-pdf/build.sh
+bash scripts/typst-pdf/build.sh
 ```
 
 首次运行需联网克隆导出器、安装 npm 依赖，转换远程图片时也可能需要网络。完整构建耗时较长。中间文件和日志位于 `tmp/pdfs/`；转换使用临时 `source/` 副本，不会改写 `docs/` 原文。

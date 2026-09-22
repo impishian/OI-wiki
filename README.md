@@ -92,6 +92,26 @@ python2 -m SimpleHTTPServer
 
 * * *
 
+## Typst PDF 书籍导出
+
+除 MkDocs 网站构建外，项目还提供了将全部正文排版为单一 PDF 书籍的构建链。它会先读取 `mkdocs.yml` 确定网站导航顺序并校验文章清单，再使用官方 [OI-Wiki-export](https://github.com/OI-wiki/OI-Wiki-export) 的 Node.js 转换器将 Markdown 转为 Typst，最后由 Typst 统一排版封面、目录、页眉页脚、代码块、数学公式、表格、提示框和图片。
+
+构建入口固定使用 Typst `0.15.0 (3ae52774)`，包含导航校验、Typst 主题和书籍模板，并会将 `edit-landing.md` 与 `intro/docker-deploy.md` 两篇附录一并纳入书中。运行：
+
+```bash
+bash scripts/typst-pdf/build.sh
+```
+
+输出文件为：
+
+```text
+output/pdf/OI-Wiki-Typst-0.15.0.pdf
+```
+
+需要 Python 3（含 PyYAML）、Node.js、npm、Git 和指定版本的 Typst。首次运行会下载官方转换器及其 npm 依赖；如果网络不可用但本机已有固定版本的 exporter clone，可通过 `OI_WIKI_EXPORTER_URL` 指向该目录。完整的依赖、字体和离线构建说明请见 [scripts/typst-pdf/README.md](scripts/typst-pdf/README.md)。
+
+* * *
+
 ## 如何参与完善 OI Wiki
 
 我们非常欢迎你为 **OI Wiki** 编写内容，将自己的所学所得与大家分享。
