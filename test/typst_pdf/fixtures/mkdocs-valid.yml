@@ -1,0 +1,5 @@
+nav:
+  - 简介:
+      - 入门: intro.md
+  - 算法:
+      - 基础: algorithm.md

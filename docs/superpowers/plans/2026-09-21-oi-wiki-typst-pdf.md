@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build all 466 documents in `mkdocs.yml` into one polished, verified PDF at `output/pdf/OI-Wiki-Typst-0.15.0.pdf` with Typst 0.15.0.
+**Goal:** Build all 466 original Markdown documents (464 `mkdocs.yml` pages plus two explicit appendices) into one polished, verified PDF at `output/pdf/OI-Wiki-Typst-0.15.0.pdf` with Typst 0.15.0.
 
 **Architecture:** Pin OI Wiki's official Typst exporter at its tested 0.15.0 upgrade commit, apply a small local compatibility/behavior patch, and replace only the top-level book template with a repository-owned print template. A shell entry point owns dependency/font setup and the full build; small Python programs independently validate navigation coverage and the finished PDF so conversion failures cannot silently produce an incomplete book.
 
@@ -13,7 +13,7 @@
 ## File map
 
 - `scripts/typst-pdf/build.sh`: reproducible end-to-end build entry point; pins exporter commit, prepares fonts, converts Markdown, compiles Typst, and invokes verification.
-- `scripts/typst-pdf/check_nav.py`: extracts the ordered Markdown list from `mkdocs.yml`, rejects missing/duplicate pages, and writes the build manifest.
+- `scripts/typst-pdf/check_nav.py`: extracts the ordered Markdown list from `mkdocs.yml`, appends explicitly requested auxiliary pages, rejects missing/duplicate pages, and writes the build manifest.
 - `scripts/typst-pdf/verify_pdf.py`: validates the final PDF's structure, metadata, page text, title coverage, links, and fonts.
 - `scripts/typst-pdf/exporter-0.15.patch`: repository-owned patch over upstream commit `a0743c869b166ccb4d3a42368f904a85384730a2`; removes QR appendices, makes missing images fatal, and emits a conversion manifest.
 - `scripts/typst-pdf/book.typ`: repository-owned A4 book shell with cover, metadata page, contents, section styling, page headers/footers, and final colophon.
@@ -194,10 +194,10 @@ Run:
 
 ```bash
 rtk tmp/pdfs/venv/bin/python -m pytest test/typst_pdf/test_check_nav.py -q
-rtk tmp/pdfs/venv/bin/python scripts/typst-pdf/check_nav.py --config mkdocs.yml --docs docs --output tmp/pdfs/nav-manifest.json --expect-count 466
+rtk tmp/pdfs/venv/bin/python scripts/typst-pdf/check_nav.py --config mkdocs.yml --docs docs --include edit-landing.md --include intro/docker-deploy.md --output tmp/pdfs/nav-manifest.json --expect-count 466
 ```
 
-Expected: `3 passed` and `validated 466 navigation pages`.
+Expected: `3 passed` and `validated 466 navigation pages` with the two explicit includes.
 
 - [ ] **Step 7: Commit the manifest validator and dependency pins**
 
@@ -238,6 +238,8 @@ mkdir -p "$work_root" "$repo_root/output/pdf"
 python3 "$repo_root/scripts/typst-pdf/check_nav.py" \
   --config "$repo_root/mkdocs.yml" \
   --docs "$repo_root/docs" \
+  --include edit-landing.md \
+  --include intro/docker-deploy.md \
   --output "$work_root/nav-manifest.json" \
   --expect-count 466
 
@@ -405,7 +407,7 @@ int main() { return 0; }
 
 - [ ] **Step 2: Run the smoke compile and observe the missing import**
 
-Run: `rtk typst compile test/typst_pdf/fixtures/theme-smoke.typ tmp/pdfs/theme-smoke.pdf`
+Run: `rtk typst compile --root . test/typst_pdf/fixtures/theme-smoke.typ tmp/pdfs/theme-smoke.pdf`
 
 Expected: FAIL because `scripts/typst-pdf/theme.typ` does not exist.
 
@@ -421,10 +423,10 @@ Create `scripts/typst-pdf/theme.typ` with exported `book-theme`, `admonition`, `
 #let paper = rgb("ffffff")
 #let panel = rgb("f3f7f8")
 #let rule = rgb("d3dde2")
-#let body-font = ("Noto Serif CJK SC", "Songti SC", "New Computer Modern")
-#let heading-font = ("LXGW WenKai", "Noto Sans CJK SC", "PingFang SC")
-#let code-font = ("DejaVu Sans Mono", "Noto Sans Mono CJK SC", "Menlo")
-#let math-font = ("New Computer Modern Math", "Noto Serif CJK SC")
+#let body-font = ("LiSong Pro", "New Computer Modern")
+#let heading-font = ("LXGW WenKai GB Screen R", "PingFang SC")
+#let code-font = ("DejaVu Sans Mono", "Menlo")
+#let math-font = ("New Computer Modern Math", "LiSong Pro")
 
 #let book-theme(body) = {
   set document(title: "OI Wiki", author: "OI Wiki Team")
@@ -504,7 +506,7 @@ Add show rules for level-1 section openers, level-2 article headings, orphan con
 Run:
 
 ```bash
-rtk typst compile test/typst_pdf/fixtures/theme-smoke.typ tmp/pdfs/theme-smoke.pdf
+rtk typst compile --root . test/typst_pdf/fixtures/theme-smoke.typ tmp/pdfs/theme-smoke.pdf
 rtk pdftoppm -png -f 1 -l 1 -r 144 tmp/pdfs/theme-smoke.pdf tmp/pdfs/theme-smoke
 ```
 
@@ -564,7 +566,7 @@ Define a `font_paths` array containing existing directories only, from:
 $work_root/fonts
 ```
 
-Build repeated `--font-path` arguments from this array. Run `typst fonts` with those arguments and require the family names `Noto Serif CJK SC` or `Songti SC`, `LXGW WenKai` or `Noto Sans CJK SC`, and `DejaVu Sans Mono` or `Menlo`. Exit with a message listing the missing family category if any category has no match.
+Build repeated `--font-path` arguments from this array. Run `typst fonts` with those arguments and require at least one environment-available family in each category: body (`LiSong Pro` or `New Computer Modern`), heading (`LXGW WenKai GB Screen R` or `PingFang SC`), code (`DejaVu Sans Mono` or `Menlo`), and math (`New Computer Modern Math` or `LiSong Pro`). Exit with a message listing the missing family category if any category has no match.
 
 - [ ] **Step 3: Add conversion, manifest comparison, and compilation**
 

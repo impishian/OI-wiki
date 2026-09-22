@@ -1,0 +1,4 @@
+pdfplumber==0.11.7
+pypdf==6.0.0
+pytest==8.4.2
+PyYAML==6.0.2
